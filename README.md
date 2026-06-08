@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Wedding Shared Album
 
-## Getting Started
+Mobile-first wedding photo sharing app inspired by satualbum.id. Guests scan a QR code, enter their name once, capture a limited number of photos, and all moments appear in one shared gallery.
 
-First, run the development server:
+## Features
+
+- QR landing page for guests at the venue
+- Name gate with per-device photo limit (default 10)
+- Live camera capture with flip camera and file upload fallback
+- Shared gallery with lightbox, per-photo likes, and download
+- Printable QR page for the host
+
+## Tech Stack
+
+- Next.js (App Router, TypeScript)
+- Tailwind CSS
+- Supabase (Postgres + Storage)
+
+## Setup
+
+### 1. Create Supabase project
+
+1. Go to [supabase.com](https://supabase.com) and create a project.
+2. Open the SQL Editor and run the contents of [`supabase/schema.sql`](supabase/schema.sql).
+3. In Project Settings → API, copy:
+   - Project URL
+   - anon public key
+   - service_role key
+
+### 2. Configure environment variables
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.local.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Fill in your Supabase keys and customize wedding text:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```env
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+NEXT_PUBLIC_PHOTO_LIMIT=10
+NEXT_PUBLIC_WEDDING_TITLE=Our Wedding Day
+NEXT_PUBLIC_WEDDING_SUBTITLE=Abadikan momen indah hari spesial kami
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Run locally
 
-## Learn More
+```bash
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `/` guest landing + name gate
+- `/capture` camera page
+- `/gallery` shared album
+- `/qr` printable QR code
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploy to Vercel
 
-## Deploy on Vercel
+1. Push this repo to GitHub.
+2. Import the project in Vercel.
+3. Add the same environment variables from `.env.local`.
+4. Set `NEXT_PUBLIC_SITE_URL` to your production URL.
+5. Deploy, then open `/qr` and print the QR for your venue.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Guest Flow
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```mermaid
+flowchart LR
+  QR[Scan QR] --> Landing[Enter name]
+  Landing --> Capture[Open camera]
+  Capture --> Upload[Upload photo]
+  Upload --> Capture
+  Capture --> Gallery[View shared album]
+  Landing --> Gallery
+```
+
+## Notes
+
+- Photo limits are enforced server-side using the `register_photo_upload` Postgres function.
+- Guest identity is tracked by a device ID stored in `localStorage`.
+- All writes go through Next.js API routes using the Supabase service role key.
+- Gallery reads are public via Supabase RLS and the public storage bucket.
+
+## Project Structure
+
+```text
+src/
+  app/
+    page.tsx              # Landing / name gate
+    capture/page.tsx      # Camera capture
+    gallery/page.tsx      # Shared album
+    qr/page.tsx           # Printable QR
+    api/guest/route.ts    # Register guest + status
+    api/upload/route.ts   # Upload photo
+    api/like/route.ts     # Toggle photo like
+  components/             # UI components
+  lib/                    # Supabase, device, constants
+supabase/schema.sql       # Database + storage setup
+```
