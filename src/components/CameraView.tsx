@@ -62,7 +62,7 @@ const CameraView = forwardRef<CameraViewHandle, CameraViewProps>(
         return;
       }
 
-      const videoConstraints: MediaTrackConstraints[] = [
+      const videoConstraints: (boolean | MediaTrackConstraints)[] = [
         {
           facingMode,
           width: { ideal: 1920 },
